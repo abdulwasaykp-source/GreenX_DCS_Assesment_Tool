@@ -1,1 +1,55 @@
+pipeline {
+    agent any
 
+    environment {
+        BACKEND  = "abdulwasaykp/greenx-backend"
+        FRONTEND = "abdulwasaykp/greenx-frontend"
+    }
+
+    stages {
+        stage('Clone') {
+            steps { git branch: 'main', url: 'https://github.com/<YOUR_USER>/GreenX_DCS_Assesment_Tool.git' }
+        }
+
+        stage('Build') {
+            steps {
+                sh '''
+                    docker build -t $BACKEND:$BUILD_NUMBER  -t $BACKEND:latest  GreenX_DCS_Assesment_Tool_Backend
+                    docker build -t $FRONTEND:$BUILD_NUMBER -t $FRONTEND:latest greenX-assessment-tool-frontend
+                '''
+            }
+        }
+
+        stage('Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhubcred',
+                        usernameVariable: 'DU', passwordVariable: 'DP')]) {
+                    sh '''
+                        echo "$DP" | docker login -u "$DU" --password-stdin
+                        docker push --all-tags $BACKEND
+                        docker push --all-tags $FRONTEND
+                        docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                withCredentials([sshUserPrivateKey(credentialsId: 'server179-ssh',
+                        keyFileVariable: 'KEY', usernameVariable: 'SSH_USER')]) {
+                    sh '''
+                        ssh -i $KEY -o StrictHostKeyChecking=no $SSH_USER@192.168.18.179 "
+                            docker network create greenx-net || true
+                            docker pull $BACKEND:$BUILD_NUMBER
+                            docker pull $FRONTEND:$BUILD_NUMBER
+                            docker rm -f greenx-backend greenx-frontend || true
+                            docker run -d --name greenx-backend  --network greenx-net --restart unless-stopped -p 8000:8000 $BACKEND:$BUILD_NUMBER
+                            docker run -d --name greenx-frontend --network greenx-net --restart unless-stopped -p 3000:80   $FRONTEND:$BUILD_NUMBER
+                        "
+                    '''
+                }
+            }
+        }
+    }
+}

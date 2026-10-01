@@ -12,7 +12,7 @@ pipeline {
 
         stage('Code Clone') {
             steps {
-                git branch: 'main', url: 'https://github.com/<YOUR_USER>/GreenX_DCS_Assesment_Tool.git'
+                git branch: 'main', url: 'https://github.com/abdulwasaykp-source/GreenX_DCS_Assesment_Tool.git'
             }
         }
 

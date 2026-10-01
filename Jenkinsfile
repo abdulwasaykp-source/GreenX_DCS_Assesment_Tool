@@ -14,6 +14,13 @@ pipeline {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/abdulwasaykp-source/GreenX_DCS_Assesment_Tool.git'
+                 sh '''
+            echo "===== PROJECT FILES ====="
+            find . -maxdepth 3 -type f | sort
+
+            echo "===== ENV FILES ====="
+            find . -name ".env" -type f
+        '''
             }
         }
 

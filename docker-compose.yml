@@ -8,15 +8,16 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
+
     volumes:
       - mysql_data:/var/lib/mysql
 
+    networks:
+      - greenx-net
+
 
   backend:
-    build:
-      context: ./GreenX_DCS_Assesment_Tool_Backend
-      dockerfile: Dockerfile
-
+    image: abdulwasaykp/greenx-backend:${DOCKER_TAG}
     container_name: greenx-backend
     restart: unless-stopped
 
@@ -26,16 +27,19 @@ services:
     ports:
       - "8000:8000"
 
+    depends_on:
+      - architecture_db_greenx
+
     command: >
       sh -c "alembic upgrade head &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
+    networks:
+      - greenx-net
+
 
   frontend:
-    build:
-      context: ./greenX-assessment-tool-frontend
-      dockerfile: Dockerfile
-
+    image: abdulwasaykp/greenx-frontend:${DOCKER_TAG}
     container_name: greenx-frontend
     restart: unless-stopped
 
@@ -48,7 +52,14 @@ services:
     ports:
       - "3000:3000"
 
+    networks:
+      - greenx-net
+
 
 volumes:
   mysql_data:
 
+
+networks:
+  greenx-net:
+    driver: bridge

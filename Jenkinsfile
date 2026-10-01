@@ -1,3 +1,4 @@
+```groovy
 pipeline {
 
     agent any
@@ -12,21 +13,30 @@ pipeline {
 
         stage('Code Clone') {
             steps {
-                git branch: 'main', url: 'https://github.com/abdulwasaykp-source/GreenX_DCS_Assesment_Tool.git'
+                git branch: 'main',
+                    url: 'https://github.com/abdulwasaykp-source/GreenX_DCS_Assesment_Tool.git'
             }
         }
+
 
         stage('Docker Build') {
             steps {
                 sh '''
-                    docker build -t ${BACKEND_IMAGE}:${DOCKER_TAG} -t ${BACKEND_IMAGE}:latest GreenX_DCS_Assesment_Tool_Backend
-                    docker build -t ${FRONTEND_IMAGE}:${DOCKER_TAG} -t ${FRONTEND_IMAGE}:latest greenX-assessment-tool-frontend
+                    docker build \
+                        -t ${BACKEND_IMAGE}:${DOCKER_TAG} \
+                        GreenX_DCS_Assesment_Tool_Backend
+
+                    docker build \
+                        -t ${FRONTEND_IMAGE}:${DOCKER_TAG} \
+                        greenX-assessment-tool-frontend
                 '''
             }
         }
 
+
         stage('Docker Hub Push') {
             steps {
+
                 withCredentials([
                     usernamePassword(
                         credentialsId: 'dockerhubcred',
@@ -34,15 +44,14 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
+
                     sh '''
                         echo "$DOCKER_PASSWORD" | docker login \
                             -u "$DOCKER_USERNAME" \
                             --password-stdin
 
                         docker push ${BACKEND_IMAGE}:${DOCKER_TAG}
-                        docker push ${BACKEND_IMAGE}:latest
                         docker push ${FRONTEND_IMAGE}:${DOCKER_TAG}
-                        docker push ${FRONTEND_IMAGE}:latest
 
                         docker logout
                     '''
@@ -50,33 +59,96 @@ pipeline {
             }
         }
 
-        stage('Deploy to Ubuntu') {
-            steps {
-                sshagent(['ubuntu-deploy-key']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no osboxes@192.168.18.179 "
-                            docker network create greenx-net || true &&
-                            docker pull ${BACKEND_IMAGE}:${DOCKER_TAG} &&
-                            docker pull ${FRONTEND_IMAGE}:${DOCKER_TAG} &&
-                            docker rm -f greenx-backend greenx-frontend || true &&
-                            docker run -d \
-                                --name greenx-backend \
-                                --network greenx-net \
-                                -p 8000:8000 \
-                                ${BACKEND_IMAGE}:${DOCKER_TAG} &&
-                            docker run -d \
-                                --name greenx-frontend \
-                                --network greenx-net \
-                                -p 3000:80 \
-                                ${FRONTEND_IMAGE}:${DOCKER_TAG}
-                        "
 
-                        echo "Application deployed successfully."
-                        echo "Frontend URL: http://192.168.18.179:3000"
-                        echo "Backend URL:  http://192.168.18.179:8000"
+        stage('Deploy to Server 2') {
+
+            environment {
+                DEPLOY_HOST = "192.168.18.179"
+                DEPLOY_USER = "osboxes"
+                DEPLOY_DIR  = "/home/osboxes/greenx-deployment"
+            }
+
+            steps {
+
+                sshagent(['ubuntu-deploy-key']) {
+
+                    sh '''
+                        echo "========================================"
+                        echo " Deploying GreenX to Server 2"
+                        echo " Server: ${DEPLOY_HOST}"
+                        echo " User:   ${DEPLOY_USER}"
+                        echo " Tag:    ${DOCKER_TAG}"
+                        echo "========================================"
+
+
+                        echo "Creating deployment directory..."
+
+                        ssh -o StrictHostKeyChecking=no \
+                            ${DEPLOY_USER}@${DEPLOY_HOST} \
+                            "mkdir -p ${DEPLOY_DIR}"
+
+
+                        echo "Copying docker-compose.yml..."
+
+                        scp -o StrictHostKeyChecking=no \
+                            docker-compose.yml \
+                            ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_DIR}/docker-compose.yml
+
+
+                        echo "Copying backend .env..."
+
+                        scp -o StrictHostKeyChecking=no \
+                            GreenX_DCS_Assesment_Tool_Backend/.env \
+                            ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_DIR}/.env
+
+
+                        echo "Deploying application..."
+
+                        ssh -o StrictHostKeyChecking=no \
+                            ${DEPLOY_USER}@${DEPLOY_HOST} "
+                            
+                                cd ${DEPLOY_DIR}
+
+                                export DOCKER_TAG=${DOCKER_TAG}
+
+                                echo '========================================'
+                                echo ' Pulling Backend Image'
+                                echo '========================================'
+
+                                docker pull ${BACKEND_IMAGE}:${DOCKER_TAG}
+
+
+                                echo '========================================'
+                                echo ' Pulling Frontend Image'
+                                echo '========================================'
+
+                                docker pull ${FRONTEND_IMAGE}:${DOCKER_TAG}
+
+
+                                echo '========================================'
+                                echo ' Starting GreenX'
+                                echo '========================================'
+
+                                docker compose up -d --remove-orphans
+
+
+                                echo '========================================'
+                                echo ' Deployment Status'
+                                echo '========================================'
+
+                                docker compose ps
+
+                            "
+
+
+                        echo "========================================"
+                        echo " Deployment completed"
+                        echo "========================================"
                     '''
                 }
             }
         }
     }
 }
+```
+

@@ -1,52 +1,79 @@
 pipeline {
+
     agent any
 
     environment {
-        BACKEND  = "abdulwasaykp/greenx-backend"
-        FRONTEND = "abdulwasaykp/greenx-frontend"
+        BACKEND_IMAGE  = "abdulwasaykp/greenx-backend"
+        FRONTEND_IMAGE = "abdulwasaykp/greenx-frontend"
+        DOCKER_TAG     = "${BUILD_NUMBER}"
     }
 
     stages {
-        stage('Clone') {
-            steps { git branch: 'main', url: 'https://github.com/<YOUR_USER>/GreenX_DCS_Assesment_Tool.git' }
+
+        stage('Code Clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/<YOUR_USER>/GreenX_DCS_Assesment_Tool.git'
+            }
         }
 
-        stage('Build') {
+        stage('Docker Build') {
             steps {
                 sh '''
-                    docker build -t $BACKEND:$BUILD_NUMBER  -t $BACKEND:latest  GreenX_DCS_Assesment_Tool_Backend
-                    docker build -t $FRONTEND:$BUILD_NUMBER -t $FRONTEND:latest greenX-assessment-tool-frontend
+                    docker build -t ${BACKEND_IMAGE}:${DOCKER_TAG} -t ${BACKEND_IMAGE}:latest GreenX_DCS_Assesment_Tool_Backend
+                    docker build -t ${FRONTEND_IMAGE}:${DOCKER_TAG} -t ${FRONTEND_IMAGE}:latest greenX-assessment-tool-frontend
                 '''
             }
         }
 
-        stage('Push') {
+        stage('Docker Hub Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhubcred',
-                        usernameVariable: 'DU', passwordVariable: 'DP')]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhubcred',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
                     sh '''
-                        echo "$DP" | docker login -u "$DU" --password-stdin
-                        docker push --all-tags $BACKEND
-                        docker push --all-tags $FRONTEND
+                        echo "$DOCKER_PASSWORD" | docker login \
+                            -u "$DOCKER_USERNAME" \
+                            --password-stdin
+
+                        docker push ${BACKEND_IMAGE}:${DOCKER_TAG}
+                        docker push ${BACKEND_IMAGE}:latest
+                        docker push ${FRONTEND_IMAGE}:${DOCKER_TAG}
+                        docker push ${FRONTEND_IMAGE}:latest
+
                         docker logout
                     '''
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to Ubuntu') {
             steps {
-                withCredentials([sshUserPrivateKey(credentialsId: 'server179-ssh',
-                        keyFileVariable: 'KEY', usernameVariable: 'SSH_USER')]) {
+                sshagent(['ubuntu-deploy-key']) {
                     sh '''
-                        ssh -i $KEY -o StrictHostKeyChecking=no $SSH_USER@192.168.18.179 "
-                            docker network create greenx-net || true
-                            docker pull $BACKEND:$BUILD_NUMBER
-                            docker pull $FRONTEND:$BUILD_NUMBER
-                            docker rm -f greenx-backend greenx-frontend || true
-                            docker run -d --name greenx-backend  --network greenx-net --restart unless-stopped -p 8000:8000 $BACKEND:$BUILD_NUMBER
-                            docker run -d --name greenx-frontend --network greenx-net --restart unless-stopped -p 3000:80   $FRONTEND:$BUILD_NUMBER
+                        ssh -o StrictHostKeyChecking=no osboxes@192.168.18.179 "
+                            docker network create greenx-net || true &&
+                            docker pull ${BACKEND_IMAGE}:${DOCKER_TAG} &&
+                            docker pull ${FRONTEND_IMAGE}:${DOCKER_TAG} &&
+                            docker rm -f greenx-backend greenx-frontend || true &&
+                            docker run -d \
+                                --name greenx-backend \
+                                --network greenx-net \
+                                -p 8000:8000 \
+                                ${BACKEND_IMAGE}:${DOCKER_TAG} &&
+                            docker run -d \
+                                --name greenx-frontend \
+                                --network greenx-net \
+                                -p 3000:80 \
+                                ${FRONTEND_IMAGE}:${DOCKER_TAG}
                         "
+
+                        echo "Application deployed successfully."
+                        echo "Frontend URL: http://192.168.18.179:3000"
+                        echo "Backend URL:  http://192.168.18.179:8000"
                     '''
                 }
             }

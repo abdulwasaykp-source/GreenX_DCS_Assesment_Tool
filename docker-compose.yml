@@ -1,3 +1,4 @@
+```yaml
 services:
 
   architecture_db_greenx:
@@ -21,7 +22,6 @@ services:
 
     image: abdulwasaykp/greenx-backend:${DOCKER_TAG}
 
-    container_name: greenx-backend
     restart: unless-stopped
 
     env_file:
@@ -47,7 +47,6 @@ services:
 
     image: abdulwasaykp/greenx-frontend:${DOCKER_TAG}
 
-    container_name: greenx-frontend
     restart: unless-stopped
 
     environment:
@@ -71,5 +70,5 @@ volumes:
 networks:
   greenx-net:
     driver: bridge
-
+```
 

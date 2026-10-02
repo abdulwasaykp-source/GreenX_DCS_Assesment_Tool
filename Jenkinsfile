@@ -23,7 +23,27 @@ pipeline {
                 '''
             }
         }
-    }
+
+   stage('Docker Hub Push') {
+    steps {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'dockerhubcred',
+                usernameVariable: 'DOCKER_USERNAME',
+                passwordVariable: 'DOCKER_PASSWORD'
+            )
+        ]) {
+            sh '''
+                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+                docker push abdulwasaykp/greenx-backend:${BUILD_NUMBER}
+                docker push abdulwasaykp/greenx-frontend:${BUILD_NUMBER}
+
+                docker logout
+            '''
+           }
+       }
+   }
 }
 
 

@@ -10,7 +10,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
 
     volumes:
-      - mysql_data:/var/lib/mysql
+  - greenx_dcs_assesment_tool_mysql_data:/var/lib/mysql
 
     networks:
       - greenx-net
@@ -64,8 +64,10 @@ services:
       - greenx-net
 
 
+
 volumes:
-  mysql_data:
+  greenx_dcs_assesment_tool_mysql_data:
+    external: true
 
 
 networks:

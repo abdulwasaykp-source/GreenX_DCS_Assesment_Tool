@@ -41,10 +41,29 @@ pipeline {
 
                 docker logout
             '''
-           }
+               }
+            }
          }
-     }
-   }
+
+     stage('Deploy to Ubuntu') {
+       steps {
+        sshagent(['ubuntu-deploy-key']) {
+            sh '''
+                ssh -o StrictHostKeyChecking=no osboxes@192.168.18.179 "
+                    cd /opt/GreenX_DCS_Assesment_Tool &&
+                    export DOCKER_TAG=${BUILD_NUMBER} &&
+                    docker compose -f compose.deploy.yml pull &&
+                    docker compose -f compose.deploy.yml up -d
+                "
+
+                echo "Application deployed successfully."
+                echo "Frontend URL: http://192.168.18.179:3000"
+                echo "Backend URL:  http://192.168.18.179:8000"
+            '''
+               }
+            }
+        }
+    }
 }    
 
 

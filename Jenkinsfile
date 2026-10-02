@@ -59,6 +59,7 @@ pipeline {
                 ssh -o StrictHostKeyChecking=no osboxes@192.168.18.179 "
                     cd /home/osboxes/greenx-deployment &&
                     export DOCKER_TAG=${BUILD_NUMBER} &&
+                    docker volume create greenx_dcs_assesment_tool_mysql_data || true &&
                     docker compose -f compose.deploy.yml pull &&
                     docker compose -f compose.deploy.yml up -d
                 "

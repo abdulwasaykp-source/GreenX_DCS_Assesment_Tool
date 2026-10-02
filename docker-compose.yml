@@ -17,9 +17,11 @@ services:
 
 
   backend:
-  build:
-    context: ./GreenX_DCS_Assesment_Tool_Backend
-  image: abdulwasaykp/greenx-backend:${DOCKER_TAG}
+    build:
+      context: ./GreenX_DCS_Assesment_Tool_Backend
+
+    image: abdulwasaykp/greenx-backend:${DOCKER_TAG}
+
     container_name: greenx-backend
     restart: unless-stopped
 
@@ -41,9 +43,11 @@ services:
 
 
   frontend:
-  build:
-    context: ./greenX-assessment-tool-frontend
-  image: abdulwasaykp/greenx-frontend:${DOCKER_TAG}
+    build:
+      context: ./greenX-assessment-tool-frontend
+
+    image: abdulwasaykp/greenx-frontend:${DOCKER_TAG}
+
     container_name: greenx-frontend
     restart: unless-stopped
 
@@ -67,3 +71,4 @@ volumes:
 networks:
   greenx-net:
     driver: bridge
+

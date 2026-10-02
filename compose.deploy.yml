@@ -1,0 +1,64 @@
+services:
+
+  architecture_db_greenx:
+    image: mysql:8.0
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+
+    volumes:
+      - greenx_dcs_assesment_tool_mysql_data:/var/lib/mysql
+
+    networks:
+      - greenx-net
+
+
+  backend:
+    image: abdulwasaykp/greenx-backend:${DOCKER_TAG}
+    restart: unless-stopped
+
+    env_file:
+      - ./GreenX_DCS_Assesment_Tool_Backend/.env
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - architecture_db_greenx
+
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+    networks:
+      - greenx-net
+
+
+  frontend:
+    image: abdulwasaykp/greenx-frontend:${DOCKER_TAG}
+    restart: unless-stopped
+
+    environment:
+      HOST: 0.0.0.0
+
+    depends_on:
+      - backend
+
+    ports:
+      - "3000:3000"
+
+    networks:
+      - greenx-net
+
+
+volumes:
+  greenx_dcs_assesment_tool_mysql_data:
+    external: true
+
+
+networks:
+  greenx-net:
+    driver: bridge
+

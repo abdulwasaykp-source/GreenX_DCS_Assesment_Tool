@@ -45,12 +45,19 @@ pipeline {
             }
          }
 
-     stage('Deploy to Ubuntu') {
-       steps {
-        sshagent(['ubuntu-deploy-key']) {
+       stage('Deploy to Ubuntu') {
+          steps {
+           sshagent(['ubuntu-deploy-key']) {
             sh '''
+                ssh -o StrictHostKeyChecking=no osboxes@192.168.18.179 \
+                    "mkdir -p /home/osboxes/greenx-deployment"
+
+                scp -o StrictHostKeyChecking=no \
+                    compose.deploy.yml \
+                    osboxes@192.168.18.179:/home/osboxes/greenx-deployment/compose.deploy.yml
+
                 ssh -o StrictHostKeyChecking=no osboxes@192.168.18.179 "
-                    cd /opt/GreenX_DCS_Assesment_Tool &&
+                    cd /home/osboxes/greenx-deployment &&
                     export DOCKER_TAG=${BUILD_NUMBER} &&
                     docker compose -f compose.deploy.yml pull &&
                     docker compose -f compose.deploy.yml up -d
@@ -60,10 +67,10 @@ pipeline {
                 echo "Frontend URL: http://192.168.18.179:3000"
                 echo "Backend URL:  http://192.168.18.179:8000"
             '''
+                    }
                }
-            }
-        }
-    }
+         }
+     }
 }    
 
 

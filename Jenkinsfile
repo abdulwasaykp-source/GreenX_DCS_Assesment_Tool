@@ -18,12 +18,14 @@ pipeline {
     stage('SonarQube Analysis') {
     steps {
         withSonarQubeEnv('SonarQube') {
-            sh '''
-                sonar-scanner \
-                    -Dsonar.projectKey=greenx-dcs \
-                    -Dsonar.projectName="GreenX DCS Assessment Tool" \
-                    -Dsonar.sources=.
-            '''
+            withSonarQubeEnv('SonarQube') {
+                sh '''
+                    sonar-scanner \
+                        -Dsonar.projectKey=greenx-dcs \
+                        -Dsonar.projectName="GreenX DCS Assessment Tool" \
+                        -Dsonar.sources=.
+                '''
+            }
         }
     }
 }

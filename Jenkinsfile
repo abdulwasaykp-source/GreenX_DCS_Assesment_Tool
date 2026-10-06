@@ -17,14 +17,16 @@ pipeline {
 
     stage('SonarQube Analysis') {
     steps {
-        withSonarQubeEnv('SonarQube') {
+        script {
+            def scannerHome = tool 'SonarScanner'
+
             withSonarQubeEnv('SonarQube') {
-                sh '''
-                    sonar-scanner \
+                sh """
+                    ${scannerHome}/bin/sonar-scanner \
                         -Dsonar.projectKey=greenx-dcs \
                         -Dsonar.projectName="GreenX DCS Assessment Tool" \
                         -Dsonar.sources=.
-                '''
+                """
             }
         }
     }

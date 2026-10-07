@@ -7,8 +7,8 @@ pipeline {
 
         SONAR_PROJECT = "greenx-dcs"
 
-        FRONTEND_URL = "http://192.168.18.179:3000"
-        BACKEND_URL  = "http://192.168.18.179:8000"
+        FRONTEND_URL = "http://192.168.18.152:3000"
+        BACKEND_URL  = "http://192.168.18.152:8000"
 
         DEVELOPER_EMAIL = "abdulwasaykp@gmail.com"
         CLIENT_EMAIL    = "kazamch749@gmail.com"
@@ -133,15 +133,15 @@ pipeline {
                 sshagent(['ubuntu-deploy-key']) {
                     sh '''
                         ssh -o StrictHostKeyChecking=no \
-                            osboxes@192.168.18.179 \
+                            osboxes@192.168.18.152 \
                             "mkdir -p /home/osboxes/greenx-deployment"
 
                         scp -o StrictHostKeyChecking=no \
                             compose.deploy.yml \
-                            osboxes@192.168.18.179:/home/osboxes/greenx-deployment/
+                            osboxes@192.168.18.152:/home/osboxes/greenx-deployment/
 
                         ssh -o StrictHostKeyChecking=no \
-                            osboxes@192.168.18.179 "
+                            osboxes@192.168.18.152 "
                             cd /home/osboxes/greenx-deployment &&
                             export DOCKER_TAG=${BUILD_NUMBER} &&
                             docker volume create greenx_dcs_assesment_tool_mysql_data || true &&

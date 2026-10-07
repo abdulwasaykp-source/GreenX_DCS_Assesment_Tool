@@ -203,18 +203,5 @@ pipeline {
             }
         }
     }
-
-    post {
-        failure {
-            emailext(
-                to: "${DEVELOPER_EMAIL}",
-                subject: "GreenX Pipeline Failed - Build #${BUILD_NUMBER}",
-                body: "Pipeline failed. Please check Jenkins Console Output."
-            )
-        }
-
-        success {
-            echo "GreenX deployment completed successfully."
-        }
-    }
 }
+  

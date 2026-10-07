@@ -1,3 +1,4 @@
+```groovy
 pipeline {
 
     agent any
@@ -54,45 +55,60 @@ pipeline {
             }
         }
 
-        stage('SonarQube Email') {
+        stage('Approval') {
             steps {
                 script {
+
+                    def approvalUrl =
+                        "${env.BUILD_URL}input/"
+
                     emailext(
                         to: "${DEVELOPER_EMAIL}",
-                        subject: "SonarQube Report - Build #${BUILD_NUMBER}",
+                        subject: "GreenX DCS Approval Required - Build #${BUILD_NUMBER}",
                         mimeType: 'text/html',
                         body: """
-                            <h2>GreenX DCS - SonarQube Report</h2>
+                            <h2>GreenX DCS - Deployment Approval</h2>
 
                             <p><b>Build:</b> #${BUILD_NUMBER}</p>
-                            <p><b>Quality Gate:</b> ${SONAR_STATUS}</p>
 
-                            <h3>SonarQube Dashboard</h3>
+                            <p>
+                                <b>SonarQube Quality Gate:</b>
+                                ${SONAR_STATUS}
+                            </p>
 
-                            <a href="http://192.168.18.97:9000/dashboard?id=${SONAR_PROJECT}">
-                                Open SonarQube Report
-                            </a>
+                            <h3>SonarQube Report</h3>
+
+                            <p>
+                                <a href="http://192.168.18.97:9000/dashboard?id=${SONAR_PROJECT}">
+                                    Open SonarQube Report
+                                </a>
+                            </p>
 
                             <hr>
 
+                            <h3>Pipeline Approval</h3>
+
                             <p>
-                                SonarQube analysis complete hai.
-                                Jenkins mein <b>Accept / Next</b> press
-                                karke pipeline continue karo.
+                                Please open Jenkins and select
+                                <b>Proceed</b> to continue or
+                                <b>Abort</b> to stop the pipeline.
+                            </p>
+
+                            <p>
+                                <a href="${approvalUrl}">
+                                    <b>OPEN APPROVAL</b>
+                                </a>
                             </p>
                         """
                     )
-                }
-            }
-        }
 
-        stage('Manual Approval') {
-            steps {
-                timeout(time: 30, unit: 'MINUTES') {
-                    input(
-                        message: "SonarQube: ${SONAR_STATUS}\n\nContinue pipeline?",
-                        ok: "Accept / Next"
-                    )
+                    timeout(time: 30, unit: 'MINUTES') {
+                        input(
+                            id: 'deploymentApproval',
+                            message: "SonarQube: ${SONAR_STATUS}\n\nContinue deployment?",
+                            ok: "ACCEPT / NEXT"
+                        )
+                    }
                 }
             }
         }
@@ -181,8 +197,7 @@ pipeline {
                         </p>
 
                         <p>
-                            You can now access and test the application
-                            using the above URLs.
+                            You can now test the application.
                         </p>
                     """
                 )

@@ -128,15 +128,6 @@ pipeline {
             }
         }
 
-        stage('Local Deploy') {
-            steps {
-                sh '''
-                    docker compose down || true
-                    docker compose up -d
-                '''
-            }
-        }
-
         stage('Deploy to Ubuntu') {
             steps {
                 sshagent(['ubuntu-deploy-key']) {

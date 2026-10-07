@@ -1,0 +1,24 @@
+name: GreenX CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-runner:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Show Project Files
+        run: |
+          echo "GreenX project checked out successfully"
+          ls -la
+          echo "Git commit:"
+          git log -1 --oneline
+
+

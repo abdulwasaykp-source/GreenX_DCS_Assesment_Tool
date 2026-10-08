@@ -36,7 +36,7 @@ jobs:
         run: |
           docker build \
             -t abdulwasaykp/greenx-frontend:${{ github.run_number }} \
-          ./greenX-assessment-tool-frontend
+            ./greenX-assessment-tool-frontend
 
       - name: Push Backend Image
         run: |

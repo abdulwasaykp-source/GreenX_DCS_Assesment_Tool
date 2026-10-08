@@ -7,10 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -55,7 +57,7 @@ jobs:
       - name: Build Backend Image
         run: |
           docker build \
-            -t abdulwasaykp/greenx--|backend:${{ github.run_number }} \
+            -t abdulwasaykp/greenx--backend:${{ github.run_number }} \
             ./GreenX_DCS_Assesment_Tool_Backend
 
       - name: Build Frontend Image
@@ -67,3 +69,13 @@ jobs:
       - name: Show Docker Images
         run: |
           docker images | grep greenx
+
+      - name: Push Backend Image
+        run: |
+          docker push \
+            abdulwasaykp/greenx--backend:${{ github.run_number }}
+
+      - name: Push Frontend Image
+        run: |
+          docker push \
+            abdulwasaykp/greenx--frontend:${{ github.run_number }}

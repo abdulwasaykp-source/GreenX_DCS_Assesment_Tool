@@ -48,7 +48,7 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.ABDULWASAYKP }}
           DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          echo "$DOCKER_TOKEN" | docker login docker.io \
+          printf '%s' "$DOCKER_TOKEN" | docker login \
             --username "$DOCKER_USERNAME" \
             --password-stdin
 

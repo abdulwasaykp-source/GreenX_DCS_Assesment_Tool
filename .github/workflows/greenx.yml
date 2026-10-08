@@ -55,13 +55,13 @@ jobs:
       - name: Build Backend Image
         run: |
           docker build \
-            -t abdulwasaykp/greenx-backend:${{ github.run_number }} \
+            -t abdulwasaykp/greenx--|backend:${{ github.run_number }} \
             ./GreenX_DCS_Assesment_Tool_Backend
 
       - name: Build Frontend Image
         run: |
           docker build \
-            -t abdulwasaykp/greenx-frontend:${{ github.run_number }} \
+            -t abdulwasaykp/greenx--frontend:${{ github.run_number }} \
             ./greenX-assessment-tool-frontend
 
       - name: Show Docker Images

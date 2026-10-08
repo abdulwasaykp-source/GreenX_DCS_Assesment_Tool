@@ -21,7 +21,7 @@ jobs:
           echo "Git commit:"
           git log -1 --oneline
 
-            - name: Check Docker Hub Secret
+      - name: Check Docker Hub Secret
         env:
           DOCKER_USERNAME: ${{ secrets.ABDULWASAYKP }}
           DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -42,7 +42,22 @@ jobs:
             echo "Docker token secret is EMPTY"
             exit 1
           fi
-          
+
+      - name: Login to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.ABDULWASAYKP }}
+          DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "$DOCKER_TOKEN" | docker login docker.io \
+            --username "$DOCKER_USERNAME" \
+            --password-stdin
+
+      - name: Build Backend Image
+        run: |
+          docker build \
+            -t abdulwasaykp/greenx-backend:${{ github.run_number }} \
+            ./GreenX_DCS_Assesment_Tool_Backend
+
       - name: Build Frontend Image
         run: |
           docker build \

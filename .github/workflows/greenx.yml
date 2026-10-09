@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,30 +20,16 @@ jobs:
         run: |
           echo "GreenX project checked out successfully"
           ls -la
-          echo "Git commit:"
           git log -1 --oneline
 
-      - name: Check Docker Hub Secret
+      - name: Check Docker Hub Secrets
         env:
           DOCKER_USERNAME: ${{ secrets.ABDULWASAYKP }}
           DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          echo "Username length: ${#DOCKER_USERNAME}"
-          echo "Token length: ${#DOCKER_TOKEN}"
-
-          if [ -n "$DOCKER_USERNAME" ]; then
-            echo "Docker username secret is available"
-          else
-            echo "Docker username secret is EMPTY"
-            exit 1
-          fi
-
-          if [ -n "$DOCKER_TOKEN" ]; then
-            echo "Docker token secret is available"
-          else
-            echo "Docker token secret is EMPTY"
-            exit 1
-          fi
+          test -n "$DOCKER_USERNAME" || exit 1
+          test -n "$DOCKER_TOKEN" || exit 1
+          echo "Docker Hub secrets are available"
 
       - name: Login to Docker Hub
         env:
@@ -57,25 +43,53 @@ jobs:
       - name: Build Backend Image
         run: |
           docker build \
-            -t abdulwasaykp/greenx--backend:${{ github.run_number }} \
+            -t abdulwasaykp/greenx-dcs-backend:${{ github.run_number }} \
             ./GreenX_DCS_Assesment_Tool_Backend
 
       - name: Build Frontend Image
         run: |
           docker build \
-            -t abdulwasaykp/greenx--frontend:${{ github.run_number }} \
+            -t abdulwasaykp/greenx-dcs-frontend:${{ github.run_number }} \
             ./greenX-assessment-tool-frontend
-
-      - name: Show Docker Images
-        run: |
-          docker images | grep greenx
 
       - name: Push Backend Image
         run: |
           docker push \
-            abdulwasaykp/greenx--backend:${{ github.run_number }}
+            abdulwasaykp/greenx-dcs-backend:${{ github.run_number }}
 
       - name: Push Frontend Image
         run: |
           docker push \
-            abdulwasaykp/greenx--frontend:${{ github.run_number }}
+            abdulwasaykp/greenx-dcs-frontend:${{ github.run_number }}
+
+  deploy:
+    needs: build-and-deploy
+    runs-on: [self-hosted, greenx-vm-156]
+
+    steps:
+
+      - name: Deploy GreenX Application
+        env:
+          DOCKER_TAG: ${{ github.run_number }}
+        run: |
+          set -e
+          cd /home/osboxes/greenx-deployment
+
+          docker compose \
+            --env-file .env \
+            -f compose.deploy.yml \
+            pull
+
+          docker compose \
+            --env-file .env \
+            -f compose.deploy.yml \
+            up -d
+
+      - name: Verify Deployment
+        run: |
+          docker ps -a
+
+          docker compose \
+            --env-file /home/osboxes/greenx-deployment/.env \
+            -f /home/osboxes/greenx-deployment/compose.deploy.yml \
+            ps

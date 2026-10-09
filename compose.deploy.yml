@@ -1,68 +1,52 @@
+```yaml
 services:
-
   greenx-dcs-db:
     image: mysql:8.0
     container_name: greenx-dcs-db
     restart: unless-stopped
-
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
-
     volumes:
       - greenx_dcs_assesment_tool_mysql_data:/var/lib/mysql
-
     networks:
       - greenx-dcs-network
 
-
   greenx-dcs-backend:
-    image: abdulwasaykp/greenx-dcs-backend:${DOCKER_TAG}
+    image: abdulwasaykp/greenx-dcs-backend:${DOCKER_TAG:?DOCKER_TAG is required}
     container_name: greenx-dcs-backend
     restart: unless-stopped
-
     env_file:
       - ./GreenX_DCS_Assesment_Tool_Backend/.env
-
     ports:
       - "8000:8000"
-
     depends_on:
       - greenx-dcs-db
-
     command: >
       sh -c "alembic upgrade head &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000"
-
     networks:
       - greenx-dcs-network
-
 
   greenx-dcs-frontend:
-    image: abdulwasaykp/greenx-dcs-frontend:${DOCKER_TAG}
+    image: abdulwasaykp/greenx-dcs-frontend:${DOCKER_TAG:?DOCKER_TAG is required}
     container_name: greenx-dcs-frontend
     restart: unless-stopped
-
     environment:
       HOST: 0.0.0.0
-
     depends_on:
       - greenx-dcs-backend
-
     ports:
       - "3000:3000"
-
     networks:
       - greenx-dcs-network
-
 
 volumes:
   greenx_dcs_assesment_tool_mysql_data:
     external: true
 
-
 networks:
   greenx-dcs-network:
     name: greenx-dcs-network
     driver: bridge
-
+```

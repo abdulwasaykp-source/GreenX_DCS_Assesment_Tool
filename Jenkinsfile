@@ -1,4 +1,3 @@
-```yaml
 name: GreenX CI/CD
 
 on:
@@ -77,4 +76,3 @@ jobs:
             --env-file /home/osboxes/greenx-deployment/.env \
             -f /home/osboxes/greenx-deployment/compose.deploy.yml \
             ps
-```

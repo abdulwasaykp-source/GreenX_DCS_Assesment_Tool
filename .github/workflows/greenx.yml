@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -27,9 +26,14 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.ABDULWASAYKP }}
           DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          test -n "$DOCKER_USERNAME" || exit 1
-          test -n "$DOCKER_TOKEN" || exit 1
-          echo "Docker Hub secrets are available"
+          test -n "$DOCKER_USERNAME" || {
+            echo "Docker username secret is missing"
+            exit 1
+          }
+          test -n "$DOCKER_TOKEN" || {
+            echo "Docker token secret is missing"
+            exit 1
+          }
 
       - name: Login to Docker Hub
         env:
@@ -67,13 +71,14 @@ jobs:
     runs-on: [self-hosted, greenx-vm-156]
 
     steps:
-
       - name: Deploy GreenX Application
         env:
           DOCKER_TAG: ${{ github.run_number }}
         run: |
           set -e
           cd /home/osboxes/greenx-deployment
+
+          echo "Deploying GreenX images with tag: $DOCKER_TAG"
 
           docker compose \
             --env-file .env \
@@ -83,13 +88,26 @@ jobs:
           docker compose \
             --env-file .env \
             -f compose.deploy.yml \
-            up -d
+            up -d --force-recreate
 
       - name: Verify Deployment
+        env:
+          DOCKER_TAG: ${{ github.run_number }}
         run: |
-          docker ps -a
+          set -e
+          cd /home/osboxes/greenx-deployment
 
           docker compose \
-            --env-file /home/osboxes/greenx-deployment/.env \
-            -f /home/osboxes/greenx-deployment/compose.deploy.yml \
+            --env-file .env \
+            -f compose.deploy.yml \
             ps
+
+          echo "Frontend image:"
+          docker inspect greenx-dcs-frontend \
+            --format '{{.Config.Image}}'
+
+          echo "Backend image:"
+          docker inspect greenx-dcs-backend \
+            --format '{{.Config.Image}}'
+
+          echo "Deployment command completed"
